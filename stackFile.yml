@@ -1,0 +1,49 @@
+version: '1.0'
+services:
+  - name: db
+    type: postgres
+    version: 12.0
+    configuration: StandAlone
+    ports:
+      - 5432
+    username: umami
+    database: umami
+    userPassword: null
+    remoteAccess: false
+    configFiles:
+      - dest: /docker-entrypoint-initdb.d/umami.sql
+        src: ./configs/umami.sql
+    deployTo:
+      - umami
+
+  - name: umami
+    type: docker
+    image: ghcr.io/mikecao/umami
+    version: postgresql-latest
+    ports:
+      - 3000
+    remoteAccess: false
+    env:
+      DATABASE_URL: postgresql://{{=service('db').get('username')}}:{{=service('db').get('userPassword')}}@{{=service('db').getMasterAlias()}}:5432/{{=service('db').get('database')}}
+      DATABASE_TYPE: postgresql
+      HASH_SALT: "{{=randomString(32)}}"
+    deployTo:
+      - umami
+
+  - name: web
+    type: nginx
+    version: 1.19
+    ports:
+      - 80
+      - 443
+    remoteAccess: true
+    serviceFiles:
+      - name: umami
+    deployTo:
+      - umami
+
+hosts:
+  - name: umami
+    requirements:
+      cores: 1
+      memory: 1
