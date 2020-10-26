@@ -2,7 +2,7 @@ version: '1.0'
 services:
   - name: db
     type: postgres
-    version: 12.0
+    version: 12
     configuration: StandAlone
     ports:
       - 5432
